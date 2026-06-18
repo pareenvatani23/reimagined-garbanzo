@@ -16,14 +16,21 @@ centre of gravity.
 | [`prototype/index.html`](prototype/index.html) | Clickable calm-fintech prototype — client app + firm console, with live white-label theming. |
 | [`prototype/README.md`](prototype/README.md) | How to open the prototype and what to try. |
 | [`docs/MVP_BUILD_PLAN.md`](docs/MVP_BUILD_PLAN.md) | The concrete engineering plan to build the MVP — stack, data model, scope, milestones, compliance, verification. |
-| [`index.html`](index.html) | Root redirect to `prototype/` so GitHub Pages serves the prototype at the site root. |
+| [`.github/workflows/pages.yml`](.github/workflows/pages.yml) | Deploys `prototype/` to GitHub Pages. |
+| [`index.html`](index.html) | Root redirect to `prototype/` — kept only as a fallback for branch-based Pages; the live Actions deploy serves `prototype/` directly. |
 
 ## Live prototype
 
-**https://pareenvatani23.github.io/reimagined-garbanzo/** (redirects to the prototype).
+**https://pareenvatani23.github.io/reimagined-garbanzo/**
 
-To turn it on: **Settings → Pages → Build and deployment → Source: _Deploy from a branch_ →
-Branch: `claude/accountant-app-research-gw906t` / `(root)` → Save.** No Actions run required.
+It's published by the **GitHub Actions** workflow ([`.github/workflows/pages.yml`](.github/workflows/pages.yml)),
+which uploads the `prototype/` folder as the site root. Pages Source is set to **GitHub Actions**, and
+the deploy runs from **`main`** (the `github-pages` environment only permits the default branch), so
+changes go live when `main` is updated.
+
+The prototype is an **installable PWA** — on a phone you can add it to the home screen and it opens
+full-screen like a native app. See [`prototype/README.md`](prototype/README.md#demo-it-on-android) for
+how to demo it on Android.
 
 ## Product in one line
 

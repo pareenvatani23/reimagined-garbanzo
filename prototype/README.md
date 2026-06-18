@@ -7,8 +7,31 @@ language. Once Pages is enabled it is live at
 
 ## How to open
 
-- **Live:** the GitHub Pages URL above (enable via Settings → Pages → Deploy from a branch → `(root)`).
+- **Live:** the GitHub Pages URL above (published automatically by the GitHub Actions workflow when `main` updates).
 - **Locally:** open `prototype/index.html` in any browser — no server required.
+
+## Demo it on Android
+
+This prototype is an **installable PWA**, so you can showcase it to clients as a full-screen app —
+no app store, no `.apk`, no build:
+
+1. On the client's (or your) Android phone, open **https://pareenvatani23.github.io/reimagined-garbanzo/** in **Chrome**.
+2. Tap the **⋮ menu → _Install app_** (or _Add to Home screen_). Accept.
+3. Launch it from the new home-screen icon — it opens **full-screen with no address bar**, looking and
+   feeling like a native app, and still works offline (a service worker caches it).
+
+Other ways to show it:
+
+- **iPhone/iPad:** Safari → **Share → Add to Home Screen** (same full-screen result).
+- **Laptop / screen-share:** open the URL in Chrome and toggle **DevTools → device toolbar** (Ctrl/Cmd+Shift+M)
+  to show it in a phone frame; or run it inside **Android Studio's emulator** (Device Manager → create a
+  virtual device → open Chrome → load the URL) if you want a true Android shell on your desktop.
+- **Real installable APK (later):** because it's a valid PWA, you can wrap the live URL into a signed
+  Android package with **[PWABuilder](https://www.pwabuilder.com/)** or **Bubblewrap** when you want a
+  sideloadable/Play-Store build.
+
+> Note: this is still the **web prototype**. The production native Android app (React Native + Expo, run
+> via Expo Go / EAS builds) is the long-term path — see [`../docs/MVP_BUILD_PLAN.md`](../docs/MVP_BUILD_PLAN.md).
 
 ## What to try (demo chrome at the top)
 

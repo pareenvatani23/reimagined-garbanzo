@@ -4,6 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>LedgerLink — white-label client app + firm console (calm fintech prototype)</title>
+<!-- PWA: installable on Android/iOS so the prototype can be demoed as a full-screen app -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#1f7a5e" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="LedgerLink" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <style>
   /* ============ White-label theme tokens ============ */
   :root{
@@ -559,6 +568,12 @@
   document.querySelectorAll('.swatch').forEach(sw=>sw.addEventListener('click',()=>{ applyBrand(sw.dataset.brand,sw.dataset.ink,sw.dataset.soft); syncTopSwatch(sw.dataset.brand);
     document.querySelectorAll('.csw').forEach(s=>s.setAttribute('aria-pressed', s.style.background.replace(/\s/g,'')===hexToRgb(sw.dataset.brand))); }));
   function hexToRgb(h){const n=parseInt(h.slice(1),16);return `rgb(${n>>16&255}, ${n>>8&255}, ${n&255})`;}
+</script>
+<!-- Register the service worker so the prototype is installable / works offline (PWA) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
 </script>
 </body>
 </html>

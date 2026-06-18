@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LedgerLink">
+  <rect x="6" y="6" width="500" height="500" rx="120" fill="#1f7a5e"/>
+  <circle cx="256" cy="256" r="138" fill="none" stroke="#ffffff" stroke-width="38"/>
+  <path d="M197 264 l36 44 l82 -107" fill="none" stroke="#ffffff" stroke-width="46"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
