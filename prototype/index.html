@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LedgerLink — white-label client app + firm console (calm fintech prototype)</title>
+<style>
+  /* ============ White-label theme tokens ============ */
+  :root{
+    --brand:#1f7a5e; --brand-ink:#0f4636; --brand-soft:#e7f3ee;
+    --bg:#f5f6f8; --card:#ffffff; --ink:#171a1f; --muted:#69707d; --line:#eceef1;
+    --good:#1f9d6b; --warn:#c9831f; --radius:18px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--font); background:#0e1116; color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; min-height:100%;
+    -webkit-font-smoothing:antialiased; padding:22px 12px 40px;}
+
+  /* ============ Demo chrome ============ */
+  .demobar{width:100%; max-width:920px; color:#cfd6e4; margin-bottom:18px;
+    display:flex; flex-wrap:wrap; gap:12px 22px; align-items:center; justify-content:center; font-size:13px;}
+  .demobar b{color:#fff}
+  .demobar .grp{display:flex; align-items:center; gap:8px}
+  .demobar small{color:#7b8496}
+  .vswitch{display:flex; background:#1a1f29; border-radius:11px; padding:4px; gap:2px}
+  .vswitch button{border:0;background:transparent;color:#aab2c0;font-weight:700;font-size:13px;
+    padding:7px 14px;border-radius:8px;cursor:pointer;font-family:var(--font)}
+  .vswitch button.on{background:var(--brand);color:#fff}
+  .swatch{width:22px;height:22px;border-radius:50%;border:2px solid #2a2f3a;cursor:pointer;transition:transform .12s}
+  .swatch:hover{transform:scale(1.12)} .swatch[aria-pressed="true"]{border-color:#fff}
+
+  /* ============ Phone frame ============ */
+  .phone{width:382px; height:806px; background:var(--bg); border-radius:42px;
+    border:11px solid #0a0c10; position:relative; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.5);}
+  .notch{position:absolute; top:0; left:50%; transform:translateX(-50%); width:150px; height:26px;
+    background:#0a0c10; border-radius:0 0 16px 16px; z-index:60}
+  .statusbar{height:46px; display:flex; align-items:flex-end; justify-content:space-between;
+    padding:0 24px 6px; font-size:12px; font-weight:600;}
+  .viewport{position:absolute; inset:46px 0 0 0; overflow:hidden}
+  body[data-mode="onboard"] .viewport{inset:46px 0 0 0}
+  body:not([data-mode="onboard"]) .viewport{inset:46px 0 86px 0}
+  .screen{position:absolute; inset:0; overflow-y:auto; padding:6px 18px 28px; display:none; animation:fade .22s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .screen::-webkit-scrollbar{width:0}
+
+  h1.scr{font-size:22px;margin:6px 0 2px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .eyebrow{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin:20px 0 10px}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+  .row{display:flex;align-items:center;gap:12px} .between{justify-content:space-between}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-ink)}
+  .pill.warn{background:#fbf1df;color:var(--warn)} .pill.good{background:#e6f6ee;color:var(--good)}
+  .stat{flex:1;text-align:left}.stat .n{font-size:22px;font-weight:700;letter-spacing:-.5px}.stat .k{font-size:12px;color:var(--muted)}
+
+  .item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .ic{width:40px;height:40px;border-radius:12px;background:var(--brand-soft);display:grid;place-items:center;flex:0 0 auto}
+  .ic svg{width:20px;height:20px;stroke:var(--brand-ink);fill:none;stroke-width:1.8}
+  .item .t{flex:1}.item .t b{display:block;font-size:14px;font-weight:600}.item .t span{font-size:12px;color:var(--muted)}
+  .item .amt{font-weight:700;font-size:14px}
+
+  .btn{display:block;width:100%;border:0;border-radius:14px;background:var(--brand);color:#fff;
+    font-weight:700;font-size:15px;padding:14px;cursor:pointer;font-family:var(--font)}
+  .btn.ghost{background:var(--brand-soft);color:var(--brand-ink)}
+  .btn.sm{width:auto;padding:9px 16px;font-size:13px;border-radius:11px}
+  .btn[disabled]{opacity:.45}
+
+  .seg{display:flex;background:#eef0f3;border-radius:12px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;border:0;background:transparent;padding:8px;border-radius:9px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;font-family:var(--font)}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  .subscreen{display:none}.subscreen.on{display:block}
+
+  .ring .pct{font-size:26px;font-weight:700;fill:var(--ink)} .ring .lbl{font-size:9px;font-weight:600;fill:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .ring-wrap{display:flex;align-items:center;gap:18px}
+
+  /* capture */
+  .cam{height:280px;border-radius:var(--radius);background:linear-gradient(160deg,#11151b,#272d37);
+    position:relative;overflow:hidden;display:grid;place-items:center;margin-bottom:14px}
+  .cam .frame{width:74%;height:74%;border:2px dashed rgba(255,255,255,.45);border-radius:14px;display:grid;place-items:center;color:rgba(255,255,255,.7);font-size:13px}
+  .cam .receipt{position:absolute;width:120px;height:160px;background:#fafafa;border-radius:6px;transform:rotate(-7deg);box-shadow:0 12px 30px rgba(0,0,0,.4);padding:10px}
+  .cam .receipt div{height:6px;background:#dcdfe4;border-radius:3px;margin-bottom:7px}
+  .cam .receipt div:nth-child(1){width:60%}.cam .receipt div:nth-child(3){width:80%}.cam .receipt div:nth-child(4){width:45%}
+  .ai{border:1px solid var(--brand);border-radius:var(--radius);padding:15px;background:linear-gradient(180deg,var(--brand-soft),#fff)}
+  .ai .head{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--brand-ink);margin-bottom:10px;font-size:13px}
+  .kv{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-bottom:1px dashed var(--line)}.kv:last-of-type{border-bottom:0}.kv b{font-weight:600}
+  .why{font-size:12px;color:var(--muted);background:#fff;border-radius:10px;padding:9px 11px;margin:10px 0}.why em{color:var(--brand-ink);font-style:normal;font-weight:600}
+
+  /* status tracker */
+  .step{display:flex;gap:12px;position:relative;padding-bottom:18px}.step:last-child{padding-bottom:0}
+  .step .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:#fff;flex:0 0 auto;z-index:2}
+  .step.done .dot{background:var(--brand);border-color:var(--brand)}.step.now .dot{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+  .step .line{position:absolute;left:8px;top:18px;bottom:0;width:2px;background:var(--line)}.step.done .line{background:var(--brand)}
+  .step .lab b{font-size:14px}.step .lab span{font-size:12px;color:var(--muted)}
+
+  /* chat / compliant messaging */
+  .securecue{display:flex;align-items:center;gap:7px;justify-content:center;font-size:11px;color:var(--muted);
+    background:#f0f4f2;border-radius:10px;padding:7px;margin-bottom:14px}
+  .bubble{max-width:80%;padding:10px 13px;border-radius:16px;font-size:14px;margin-bottom:4px;line-height:1.35}
+  .bubble.them{background:#fff;box-shadow:var(--shadow);border-bottom-left-radius:5px}
+  .bubble.me{background:var(--brand);color:#fff;margin-left:auto;border-bottom-right-radius:5px}
+  .receipt-mark{font-size:10px;color:var(--muted);text-align:right;margin:0 2px 12px}
+  .docchip{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--brand);
+    border-radius:12px;padding:11px 12px;margin-bottom:8px}
+  .docchip .t{flex:1;font-size:13px}.docchip .t b{display:block} .docchip .t span{color:var(--muted);font-size:11px}
+  .composer{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;margin-top:6px}
+  .composer input{border:0;flex:1;font-size:14px;font-family:var(--font);outline:none;background:transparent}
+  .composer .send{width:38px;height:38px;border-radius:50%;background:var(--brand);border:0;color:#fff;cursor:pointer}
+  .disclaimer{font-size:11px;color:var(--muted);background:#fff7ea;border:1px solid #f3e2c4;border-radius:10px;padding:8px 10px;margin-bottom:12px}
+
+  .feed-img{height:110px;margin:-16px -16px 12px;border-radius:var(--radius) var(--radius) 0 0;background:linear-gradient(135deg,var(--brand),var(--brand-ink))}
+  .tag{font-size:11px;font-weight:700;color:var(--brand-ink);text-transform:uppercase;letter-spacing:.5px}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:14px}
+
+  /* ===== Onboarding ===== */
+  .ob{min-height:100%;display:flex;flex-direction:column}
+  .ob .hero{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:10px 6px}
+  .brandmark{width:64px;height:64px;border-radius:18px;background:var(--brand);color:#fff;display:grid;place-items:center;
+    font-weight:800;font-size:26px;margin:0 auto 20px;box-shadow:var(--shadow)}
+  .ob h2{font-size:25px;letter-spacing:-.4px;margin:0 0 8px}
+  .ob p.lead{color:var(--muted);font-size:14px;line-height:1.5;margin:0 auto;max-width:280px}
+  .field{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 15px;font-size:15px;width:100%;margin-bottom:10px;font-family:var(--font)}
+  .field:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+  .nopass{display:flex;align-items:center;gap:7px;justify-content:center;font-size:12px;color:var(--good);margin:4px 0 16px}
+  .faceid-circle{width:96px;height:96px;border-radius:50%;border:3px solid var(--brand);display:grid;place-items:center;margin:0 auto 18px}
+  .faceid-circle svg{width:48px;height:48px;stroke:var(--brand);fill:none;stroke-width:1.6}
+  .starter{display:flex;gap:13px;align-items:center;text-align:left;width:100%;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer}
+  .starter .n{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex:0 0 auto}
+  .starter .t b{display:block;font-size:14px}.starter .t span{font-size:12px;color:var(--muted)}
+  .obsteps{display:flex;gap:6px;justify-content:center;margin:2px 0 18px}
+  .obsteps i{width:24px;height:4px;border-radius:2px;background:var(--line)}
+  .obsteps i.on{background:var(--brand)}
+  .verified{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--good);background:#e6f6ee;padding:5px 11px;border-radius:999px;margin:0 auto 14px}
+  .streak{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--warn);background:#fbf1df;padding:4px 10px;border-radius:999px}
+  .stepper{display:flex;align-items:center;gap:14px}
+  .stepper button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:18px;font-weight:700;cursor:pointer;color:var(--brand-ink);font-family:var(--font)}
+  .altcap{display:flex;gap:10px;margin-top:12px}
+  .altcap .opt{flex:1;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+  .altcap .opt b{font-size:12px;display:block}.altcap .opt span{font-size:10px;color:var(--muted)}
+
+  /* ===== Firm console ===== */
+  .toggle{width:46px;height:28px;border-radius:999px;background:#d5d9df;position:relative;cursor:pointer;flex:0 0 auto;transition:background .15s}
+  .toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .15s}
+  .toggle.on{background:var(--brand)} .toggle.on::after{left:21px}
+  .swatchrow{display:flex;gap:10px;margin:6px 0 2px}
+  .csw{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px var(--line)}
+  .csw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+  .preview{display:flex;align-items:center;gap:10px;background:var(--brand-soft);border-radius:13px;padding:12px;margin-top:6px}
+  .preview .lg{width:38px;height:38px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800}
+  .miniring{display:flex;gap:10px;align-items:center}
+  .bar{height:9px;border-radius:5px;background:var(--line);overflow:hidden}.bar>i{display:block;height:100%;background:var(--brand)}
+  .tile{flex:1;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:13px}
+  .tile .n{font-size:21px;font-weight:700}.tile .k{font-size:11px;color:var(--muted)}
+  .dot-risk{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+
+  /* ===== tab bars ===== */
+  .tabbar{position:absolute;left:0;right:0;bottom:0;height:86px;background:#fff;border-top:1px solid var(--line);
+    display:none;align-items:flex-start;padding:8px 6px 0;z-index:50}
+  body[data-mode="client"] #tabsClient{display:flex}
+  body[data-mode="firm"] #tabsFirm{display:flex}
+  .tab{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;padding-top:6px;font-family:var(--font)}
+  .tab svg{width:24px;height:24px;stroke:var(--muted);fill:none;stroke-width:1.9}
+  .tab.on{color:var(--brand)} .tab.on svg{stroke:var(--brand)}
+  .fab{flex:0 0 auto;width:60px;display:flex;justify-content:center}
+  .fab button{width:58px;height:58px;border-radius:50%;background:var(--brand);border:4px solid #fff;margin-top:-22px;box-shadow:0 8px 20px rgba(0,0,0,.18);cursor:pointer;display:grid;place-items:center}
+  .fab svg{width:26px;height:26px;stroke:#fff;stroke-width:2.2;fill:none}
+</style>
+</head>
+<body data-mode="onboard">
+
+  <div class="demobar">
+    <div class="grp"><b>LedgerLink</b><small>white-label · calm-fintech prototype</small></div>
+    <div class="vswitch">
+      <button onclick="setMode('onboard',this)" class="on">Onboarding</button>
+      <button onclick="setMode('client',this)">Client app</button>
+      <button onclick="setMode('firm',this)">Firm console</button>
+    </div>
+    <div class="grp"><small>Firm brand:</small>
+      <button class="swatch" style="background:#1f7a5e" data-brand="#1f7a5e" data-ink="#0f4636" data-soft="#e7f3ee" aria-pressed="true"></button>
+      <button class="swatch" style="background:#2563eb" data-brand="#2563eb" data-ink="#13348c" data-soft="#e7eefe"></button>
+      <button class="swatch" style="background:#7c3aed" data-brand="#7c3aed" data-ink="#4a1d96" data-soft="#f0e9fe"></button>
+      <button class="swatch" style="background:#e0641b" data-brand="#e0641b" data-ink="#8a3a0c" data-soft="#fdecdf"></button>
+      <button class="swatch" style="background:#0f172a" data-brand="#0f172a" data-ink="#0f172a" data-soft="#e8eaf0"></button>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="statusbar"><span>9:41</span><span>5G &nbsp; 100%</span></div>
+    <div class="viewport">
+
+      <!-- ===================== ONBOARDING ===================== -->
+      <section class="screen active" id="ob-welcome">
+        <div class="ob"><div class="hero">
+          <div class="brandmark">A</div>
+          <h2>Acme Advisory</h2>
+          <p class="lead">Your tax records, receipts and your accountant — all in one place. Let's get you set up in under a minute.</p>
+        </div>
+        <button class="btn" onclick="go('ob-identify')">Get started</button>
+        <p class="sub" style="text-align:center;margin:12px 0 4px">Invited by Acme Advisory</p></div>
+      </section>
+
+      <section class="screen" id="ob-identify">
+        <div class="ob"><div class="obsteps" style="margin-top:6px"><i class="on"></i><i></i><i></i></div><div class="hero" style="flex:0;padding-top:8px">
+          <div class="brandmark">A</div>
+          <h2>What's your email?</h2>
+          <p class="lead">We'll send you a secure sign-in link — no password to remember.</p>
+        </div>
+        <div style="margin-top:18px">
+          <input class="field" type="email" value="sam@example.com" />
+          <input class="field" type="tel" placeholder="Mobile (optional, for reminders)" value="0412 345 678" />
+          <div class="nopass">🔒 Passwordless — nothing to forget</div>
+          <button class="btn" onclick="go('ob-sent')">Send my magic link →</button>
+        </div></div>
+      </section>
+
+      <section class="screen" id="ob-sent">
+        <div class="ob"><div class="obsteps" style="margin-top:6px"><i class="on"></i><i class="on"></i><i></i></div><div class="hero">
+          <div class="brandmark">✉️</div>
+          <h2>Check your email</h2>
+          <p class="lead">We sent a one-tap sign-in link to <b>sam@example.com</b>. Open it on this phone to continue — it expires in 15 minutes.</p>
+        </div>
+        <button class="btn" onclick="go('ob-faceid')">I've tapped the link (demo) →</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="go('ob-identify')">Use a different email</button></div>
+      </section>
+
+      <section class="screen" id="ob-faceid">
+        <div class="ob"><div class="obsteps" style="margin-top:6px"><i class="on"></i><i class="on"></i><i class="on"></i></div><div class="hero">
+          <span class="verified">✓ You're verified, Sam</span>
+          <div class="faceid-circle"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 10v1M15 10v1M12 9v4l-1 1M9.5 15c1.5 1 3.5 1 5 0"/></svg></div>
+          <h2>Save your face for next time</h2>
+          <p class="lead">We'll use Face ID to sign you in instantly — so there's never a password to remember.</p>
+        </div>
+        <button class="btn" onclick="go('ob-home')">Use Face ID</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="go('ob-home')">Maybe later</button></div>
+      </section>
+
+      <section class="screen" id="ob-home">
+        <h1 class="scr" style="margin-top:10px">You're in, Sam 👋</h1>
+        <p class="sub">Acme Advisory left something for you.</p>
+        <div class="card" style="background:var(--brand-soft);box-shadow:none;border:1px solid var(--brand)">
+          <div class="row between"><div><span class="tag">Waiting on you</span>
+            <b style="display:block;font-size:15px;margin:6px 0 2px;color:var(--brand-ink)">Send your July–Aug receipts</b>
+            <p class="sub" style="margin:0">Priya needs these to start your return</p></div></div>
+          <button class="btn" style="margin-top:12px" onclick="setMode('client'); go('capture')">Start →</button>
+        </div>
+        <div class="eyebrow">Or get set up — pick any</div>
+        <button class="starter" onclick="setMode('client'); go('capture')">
+          <span class="n">1</span><div class="t"><b>Snap your first receipt</b><span>We'll read & sort it for you</span></div></button>
+        <button class="starter" onclick="setMode('client'); go('records'); sub2('rec-wfh')">
+          <span class="n">2</span><div class="t"><b>Log today's work-from-home hours</b><span>Keeps your claim audit-ready</span></div></button>
+        <button class="starter" onclick="setMode('client'); go('inbox')">
+          <span class="n">3</span><div class="t"><b>Say hi to your accountant</b><span>Secure chat — replaces email & texts</span></div></button>
+        <div class="divider"></div>
+        <button class="btn ghost" onclick="setMode('client'); go('home')">Skip to my dashboard</button>
+      </section>
+
+      <!-- ===================== CLIENT APP ===================== -->
+      <section class="screen" id="home">
+        <div class="row between" style="margin:8px 0 2px">
+          <div><div class="sub" style="margin:0">Good morning</div><h1 class="scr">Sam Carter</h1></div>
+          <div class="avatar">SC</div>
+        </div>
+        <div class="card"><div class="ring-wrap">
+          <svg class="ring" width="104" height="104" viewBox="0 0 104 104">
+            <circle cx="52" cy="52" r="44" fill="none" stroke="var(--line)" stroke-width="10"/>
+            <circle cx="52" cy="52" r="44" fill="none" stroke="var(--brand)" stroke-width="10" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="60.8" transform="rotate(-90 52 52)"/>
+            <text x="52" y="50" text-anchor="middle" class="pct">78%</text><text x="52" y="66" text-anchor="middle" class="lbl">Tax ready</text>
+          </svg>
+          <div><b style="font-size:18px;color:var(--brand-ink)">$4,210 <span style="font-size:12px;font-weight:600;color:var(--muted)">claimable so far</span></b>
+            <p class="sub" style="margin:4px 0 10px">2 things left before EOFY</p>
+            <span class="streak">🔥 6-week prep streak</span></div>
+        </div>
+        <div class="divider"></div>
+        <div class="row between"><span class="pill warn">⚠ Log this week's WFH hours</span><span class="sub" style="margin:0;font-size:11px">keeps your streak</span></div></div>
+        <div class="card row between" style="background:var(--brand-soft);box-shadow:none;padding:12px 16px">
+          <div class="row" style="gap:10px"><span style="font-size:18px">🗓️</span><div><b style="font-size:13px;color:var(--brand-ink)">Friday check-in</b><p class="sub" style="margin:2px 0 0">3 receipts to sort before the weekend</p></div></div>
+          <button class="btn sm" onclick="go('capture')">Sort</button></div>
+        <div class="card row" style="gap:0">
+          <div class="stat"><div class="n">$4,210</div><div class="k">Deductions YTD</div></div>
+          <div style="width:1px;background:var(--line);align-self:stretch"></div>
+          <div class="stat" style="padding-left:16px"><div class="n">142</div><div class="k">Receipts captured</div></div>
+        </div>
+        <div class="eyebrow">Recent activity</div>
+        <div class="card" style="padding-top:4px;padding-bottom:4px">
+          <div class="item"><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></div><div class="t"><b>Officeworks</b><span>Office supplies · auto-categorised</span></div><div class="amt">$89.00</div></div>
+          <div class="item"><div class="ic"><svg viewBox="0 0 24 24"><path d="M5 17h14M6 17V9l3-4h6l3 4v8"/></svg></div><div class="t"><b>Trip — Parramatta client</b><span>Logbook · 41 km</span></div><div class="amt">$36.08</div></div>
+          <div class="item"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg></div><div class="t"><b>Work from home</b><span>6 hrs logged today</span></div><div class="amt">+6 h</div></div>
+        </div>
+        <div class="card" style="background:var(--brand-soft);box-shadow:none"><div class="row between">
+          <div><b style="font-size:14px;color:var(--brand-ink)">EOFY is approaching</b><p class="sub" style="margin:4px 0 0">Send your records to Acme Advisory</p></div>
+          <button class="btn sm" onclick="go('inbox')">Send →</button></div></div>
+      </section>
+
+      <section class="screen" id="records">
+        <h1 class="scr">Records</h1><p class="sub">Everything kept for 5 years · export anytime</p>
+        <div class="seg">
+          <button class="on" onclick="sub2('rec-receipts',this)">Receipts</button>
+          <button onclick="sub2('rec-log',this)">Logbook</button>
+          <button onclick="sub2('rec-wfh',this)">WFH hours</button>
+        </div>
+        <div class="subscreen on" id="rec-receipts">
+          <div class="card" style="padding-top:4px;padding-bottom:4px">
+            <div class="item"><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6z"/></svg></div><div class="t"><b>Officeworks</b><span>Office supplies · 12 Jun · GST $8.09</span></div><div class="amt">$89.00</div></div>
+            <div class="item"><div class="ic"><svg viewBox="0 0 24 24"><path d="M5 17h14"/></svg></div><div class="t"><b>Shell — fuel</b><span>Motor vehicle · 9 Jun</span></div><div class="amt">$72.40</div></div>
+            <div class="item"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h16"/></svg></div><div class="t"><b>Telstra</b><span>Phone & internet · 1 Jun</span></div><div class="amt">$65.00</div></div>
+          </div>
+          <button class="btn ghost" onclick="go('capture')">＋ Capture a receipt</button>
+        </div>
+        <div class="subscreen" id="rec-log">
+          <div class="card"><div class="row between"><span class="tag">12-week logbook</span><span class="pill good">✓ Valid · 5 yrs</span></div>
+            <div class="divider"></div><div class="row between"><div class="stat"><div class="n">68%</div><div class="k">Business use</div></div><div class="stat"><div class="n">1,284</div><div class="k">km this year</div></div></div></div>
+          <div class="card" style="padding-top:4px;padding-bottom:4px">
+            <div class="item"><div class="t"><b>Parramatta — client meeting</b><span>9 Jun · business</span></div><div class="amt">41 km</div></div>
+            <div class="item"><div class="t"><b>Supplier pickup — Botany</b><span>7 Jun · business</span></div><div class="amt">23 km</div></div></div>
+          <button class="btn ghost" onclick="go('assistant')">🎙 “I drove 40km to a client today”</button>
+        </div>
+        <div class="subscreen" id="rec-wfh">
+          <div class="card"><div class="row between"><div><b style="font-size:15px">612 hrs</b><p class="sub" style="margin:4px 0 0">logged this FY @ 70c/hr</p></div>
+            <div class="stat" style="text-align:right;flex:0"><div class="n" style="color:var(--brand)">$428</div><div class="k">est. claim</div></div></div>
+            <div class="divider"></div><p class="sub" style="margin:0">ATO needs your <b>actual hours for the whole year</b> — we keep a running diary so you never estimate.</p></div>
+          <div class="card"><div class="row between"><div><b style="font-size:14px">Today's hours</b><p class="sub" style="margin:4px 0 0"><span id="wfhH">6</span> hrs × 70¢ = <b style="color:var(--brand)">$<span id="wfhD">4.20</span></b></p></div>
+            <div class="stepper"><button onclick="wfh(-1)">−</button><b style="font-size:17px;min-width:18px;text-align:center" id="wfhN">6</b><button onclick="wfh(1)">＋</button></div></div></div>
+        </div>
+      </section>
+
+      <section class="screen" id="capture">
+        <h1 class="scr">Capture</h1><p class="sub">Snap it — we read & sort it</p>
+        <div class="cam"><div class="frame">Align receipt within frame</div><div class="receipt"><div></div><div></div><div></div><div></div></div></div>
+        <div class="ai"><div class="head">✨ AI suggestion <span class="pill" style="margin-left:auto">Confirm to save</span></div>
+          <div class="kv"><span>Merchant</span><b>Officeworks</b></div>
+          <div class="kv"><span>Date</span><b>12 Jun 2026</b></div>
+          <div class="kv"><span>Amount</span><b>$89.00</b></div>
+          <div class="kv"><span>GST</span><b>$8.09</b></div>
+          <div class="kv"><span>Category</span><b style="color:var(--brand-ink)">Office supplies ▾</b></div>
+          <div class="why">Why this category? <em>“Officeworks” + line items (paper, ink) match work-related office supplies. You can change it.</em></div>
+          <button class="btn">Confirm & save</button></div>
+        <p class="sub" style="text-align:center;margin:14px 0 6px">No app handy? Send receipts in however suits you</p>
+        <div class="altcap">
+          <div class="opt"><span>✉️</span><div><b>Forward email</b><span>receipts@acme.ll</span></div></div>
+          <div class="opt"><span>💬</span><div><b>Text a photo</b><span>0488 ACME (2263)</span></div></div>
+        </div>
+      </section>
+
+      <!-- Compliant messaging -->
+      <section class="screen" id="inbox">
+        <h1 class="scr">Acme Advisory</h1><p class="sub">Priya Nair · your accountant</p>
+        <div class="securecue">🔒 Secure & recorded — meets your firm's privacy obligations</div>
+        <div class="eyebrow">Your 2025–26 return</div>
+        <div class="card"><div class="track">
+          <div class="step done"><div class="line"></div><div class="dot"></div><div class="lab"><b>Records received</b><br><span>14 Jun</span></div></div>
+          <div class="step now"><div class="line"></div><div class="dot"></div><div class="lab"><b>In progress</b><br><span>Priya is reviewing</span></div></div>
+          <div class="step"><div class="line"></div><div class="dot"></div><div class="lab"><b>Ready to sign</b></div></div>
+          <div class="step"><div class="dot"></div><div class="lab"><b>Lodged with ATO</b></div></div>
+        </div></div>
+        <div class="eyebrow">Messages</div>
+        <div class="bubble them">Hi Sam — could you send last month's fuel receipts? 🚗</div>
+        <div class="receipt-mark">9:31</div>
+        <div class="bubble me">Just snapped them, all in 👍</div>
+        <div class="receipt-mark">✓✓ Read 9:42</div>
+        <div class="docchip"><div class="ic" style="width:32px;height:32px"><svg viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6z"/></svg></div>
+          <div class="t"><b>Requested: Private health statement</b><span>Due before lodgment</span></div>
+          <button class="btn sm">Upload</button></div>
+        <div class="bubble them">Perfect, thanks! I'll have a draft to you Friday.</div>
+        <div class="receipt-mark">9:43</div>
+        <div class="composer"><input placeholder="Message Priya…" /><button class="send">↑</button></div>
+      </section>
+
+      <section class="screen" id="hub">
+        <h1 class="scr">Hub</h1><p class="sub">From Acme Advisory</p>
+        <div class="card"><div class="feed-img"></div><span class="tag">EOFY guide</span>
+          <b style="display:block;font-size:16px;margin:6px 0 4px">5 deductions small businesses forget</b>
+          <p class="sub" style="margin:0">A 3-minute read before you lodge this year.</p></div>
+        <div class="card row between"><div><span class="tag">Webinar · 24 Jun</span><b style="display:block;margin:6px 0 2px;font-size:15px">EOFY planning, live Q&A</b><p class="sub" style="margin:0">6:30pm AEST · online</p></div><button class="btn sm">RSVP</button></div>
+        <div class="eyebrow">Ask your accountant</div>
+        <div class="card" style="padding-top:4px;padding-bottom:4px">
+          <div class="item"><div class="t"><b>Can I claim my home office furniture?</b><span>Popular question</span></div><span style="color:var(--muted)">›</span></div>
+          <div class="item"><div class="t"><b>What records do I need for car expenses?</b><span>Popular question</span></div><span style="color:var(--muted)">›</span></div></div>
+        <button class="btn ghost" onclick="go('assistant')">💬 Ask the AI assistant</button>
+      </section>
+
+      <section class="screen" id="assistant">
+        <h1 class="scr">Assistant</h1><p class="sub">General help · logs to your records</p>
+        <div class="disclaimer">ℹ️ I share <b>general information</b> only — not personal tax advice. Your accountant at Acme Advisory confirms what applies to you.</div>
+        <div class="bubble them">Hi Sam 👋 Snap a receipt, log a trip, or ask a tax question.</div>
+        <div class="bubble me">I drove 40km to a client in Parramatta today</div>
+        <div class="bubble them">Logged a <b>40 km business trip</b> to your vehicle logbook ✅ Want me to add the return leg too?</div>
+        <div class="bubble me">What records do I need for a car claim?</div>
+        <div class="bubble them">Generally the ATO accepts a <b>12-week logbook</b> (business-use %) or <b>cents-per-km</b> (capped at 5,000 km). Keep receipts either way. Your accountant will pick what's best for you.</div>
+      </section>
+
+      <!-- ===================== FIRM CONSOLE ===================== -->
+      <section class="screen" id="firm-clients">
+        <div class="row between" style="margin:8px 0 2px"><div><div class="sub" style="margin:0">Acme Advisory · admin</div><h1 class="scr">Clients</h1></div><div class="avatar">PN</div></div>
+        <div class="row" style="gap:10px;margin-bottom:14px">
+          <div class="tile"><div class="n">312</div><div class="k">Active clients</div></div>
+          <div class="tile"><div class="n">84%</div><div class="k">App adopted</div></div>
+          <div class="tile"><div class="n">9</div><div class="k">At risk</div></div>
+        </div>
+        <div class="card row between" style="background:var(--brand-soft);box-shadow:none">
+          <div><b style="font-size:14px;color:var(--brand-ink)">Invite your clients</b><p class="sub" style="margin:4px 0 0">Import a CSV from Xero/MYOB</p></div>
+          <button class="btn sm" onclick="go('firm-invite')">Import →</button></div>
+        <div class="eyebrow">Recent</div>
+        <div class="card" style="padding-top:4px;padding-bottom:4px">
+          <div class="item"><div class="avatar">SC</div><div class="t"><b>Sam Carter</b><span>Active · 142 receipts</span></div><span class="pill good">On track</span></div>
+          <div class="item"><div class="avatar">JL</div><div class="t"><b>Jo Lim</b><span>No activity 38 days</span></div><span class="pill warn">At risk</span></div>
+          <div class="item"><div class="avatar">RP</div><div class="t"><b>Raj Patel</b><span>Invite not opened</span></div><span class="pill">Pending</span></div>
+        </div>
+      </section>
+
+      <section class="screen" id="firm-invite">
+        <h1 class="scr">Invite clients</h1><p class="sub">Zero effort — we send & chase the invites</p>
+        <div class="card">
+          <div class="row between"><b style="font-size:14px">1 · Import list</b><span class="pill good">✓ 312 rows</span></div>
+          <div class="divider"></div>
+          <div class="item" style="border:0;padding:6px 0"><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6z"/></svg></div><div class="t"><b>clients_xero_export.csv</b><span>Mapped: name · email · mobile</span></div></div>
+        </div>
+        <div class="card">
+          <b style="font-size:14px">2 · How they're invited</b>
+          <div class="row between" style="margin-top:12px"><div class="t"><b style="font-size:13px">Email magic-link</b><br><span class="sub">Passwordless — one tap to join</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="row between" style="margin-top:12px"><div class="t"><b style="font-size:13px">SMS nudge</b><br><span class="sub">Follow-up to non-openers</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="row between" style="margin-top:12px"><div class="t"><b style="font-size:13px">Auto-remind after 3 days</b><br><span class="sub">We chase, you don't</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <button class="btn" onclick="go('firm-clients')">Send 312 invites</button>
+      </section>
+
+      <section class="screen" id="firm-brand">
+        <h1 class="scr">Branding</h1><p class="sub">Self-serve — changes apply to every client instantly</p>
+        <div class="card">
+          <b style="font-size:14px">Logo</b>
+          <div class="item" style="border:0;padding:10px 0"><div class="ic" style="background:var(--brand)"><span style="color:#fff;font-weight:800">A</span></div><div class="t"><b>acme-logo.png</b><span>Tap to replace</span></div><span style="color:var(--muted)">›</span></div>
+        </div>
+        <div class="card">
+          <b style="font-size:14px">Brand colour</b>
+          <div class="swatchrow">
+            <span class="csw" style="background:#1f7a5e" aria-pressed="true" onclick="pick(this,'#1f7a5e','#0f4636','#e7f3ee')"></span>
+            <span class="csw" style="background:#2563eb" onclick="pick(this,'#2563eb','#13348c','#e7eefe')"></span>
+            <span class="csw" style="background:#7c3aed" onclick="pick(this,'#7c3aed','#4a1d96','#f0e9fe')"></span>
+            <span class="csw" style="background:#e0641b" onclick="pick(this,'#e0641b','#8a3a0c','#fdecdf')"></span>
+            <span class="csw" style="background:#0f172a" onclick="pick(this,'#0f172a','#0f172a','#e8eaf0')"></span>
+          </div>
+          <div class="preview"><div class="lg">A</div><div style="flex:1">
+            <b style="font-size:13px">Live preview</b>
+            <div class="bar" style="margin-top:7px"><i style="width:78%"></i></div>
+          </div><span class="pill">Tax ready</span></div>
+        </div>
+        <button class="btn">Publish to all clients</button>
+      </section>
+
+      <section class="screen" id="firm-send">
+        <h1 class="scr">Broadcast</h1><p class="sub">Push & reminders — segment your client base</p>
+        <div class="card">
+          <b style="font-size:14px">New push</b>
+          <input class="field" style="margin-top:10px" value="EOFY is close — send us your records 📋" />
+          <div class="seg"><button class="on">All clients</button><button>At risk</button><button>Not lodged</button></div>
+          <span class="sub" style="font-size:11px;display:block;margin-bottom:6px">Narrow by segment</span>
+          <div class="row" style="gap:7px;flex-wrap:wrap"><span class="pill">Sole traders</span><span class="pill" style="background:#eef0f3;color:var(--muted)">Companies</span><span class="pill" style="background:#eef0f3;color:var(--muted)">Oct lodgers</span><span class="pill" style="background:#eef0f3;color:var(--muted)">May lodgers</span></div>
+        </div>
+        <div class="card row between" style="background:#f0f4f2;box-shadow:none">
+          <div class="row" style="gap:9px"><span style="font-size:16px">🛡️</span><div><b style="font-size:13px">Frequency cap</b><p class="sub" style="margin:2px 0 0">Max 3 per client / month — avoids opt-outs</p></div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="eyebrow">Scheduled — AU tax calendar</div>
+        <div class="card" style="padding-top:4px;padding-bottom:4px">
+          <div class="item"><div class="t"><b>“Start your WFH hours diary”</b><span>1 Jul · all clients</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="item"><div class="t"><b>“Switch WFH to actual hours”</b><span>1 Mar · all clients</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="item"><div class="t"><b>“EOFY — final receipts”</b><span>30 Jun · all clients</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <button class="btn">Send now</button>
+      </section>
+
+      <section class="screen" id="firm-content">
+        <h1 class="scr">Content</h1><p class="sub">Done-for-you — you barely lift a finger</p>
+        <div class="card"><div class="row between">
+          <div class="t"><b style="font-size:14px">AI auto-newsletter</b><br><span class="sub">Monthly, written in Acme's tone — you approve, we send</span></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="eyebrow">From the content library</div>
+        <div class="card"><div class="feed-img" style="height:90px"></div><span class="tag">Draft · ready to send</span>
+          <b style="display:block;font-size:15px;margin:6px 0 4px">5 deductions small businesses forget</b>
+          <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm">Approve & publish</button><button class="btn sm ghost">Edit</button></div></div>
+        <div class="card" style="padding-top:4px;padding-bottom:4px">
+          <div class="item"><div class="t"><b>EOFY checklist 2025–26</b><span>Library · 1-tap publish</span></div><button class="btn sm ghost">Use</button></div>
+          <div class="item"><div class="t"><b>WFH rule change explainer</b><span>Library · 1-tap publish</span></div><button class="btn sm ghost">Use</button></div>
+        </div>
+      </section>
+
+      <section class="screen" id="firm-insights">
+        <h1 class="scr">Engagement</h1><p class="sub">Spot churn 60–90 days early</p>
+        <div class="row" style="gap:10px;margin-bottom:14px">
+          <div class="tile"><div class="n">84%</div><div class="k">App adopted</div></div>
+          <div class="tile"><div class="n">+12%</div><div class="k">Retention YoY</div></div>
+        </div>
+        <div class="eyebrow">At-risk clients (gone quiet)</div>
+        <div class="card" style="padding-top:4px;padding-bottom:4px">
+          <div class="item"><span class="dot-risk" style="background:#d64545"></span><div class="t"><b>Jo Lim</b><span>No activity 38 days · lodged 3 yrs</span></div><button class="btn sm ghost">Nudge</button></div>
+          <div class="item"><span class="dot-risk" style="background:#d68a45"></span><div class="t"><b>Dana Wu</b><span>Stopped capturing 22 days ago</span></div><button class="btn sm ghost">Nudge</button></div>
+          <div class="item"><span class="dot-risk" style="background:#d68a45"></span><div class="t"><b>Raj Patel</b><span>Invite never opened</span></div><button class="btn sm ghost">Resend</button></div>
+        </div>
+        <div class="card" style="background:var(--brand-soft);box-shadow:none"><b style="font-size:13px;color:var(--brand-ink)">💡 AI suggestion</b><p class="sub" style="margin:6px 0 0">3 at-risk clients haven't booked an EOFY review. Send the “Book your EOFY chat” campaign?</p></div>
+      </section>
+
+    </div>
+
+    <!-- client tab bar -->
+    <nav class="tabbar" id="tabsClient">
+      <button class="tab on" data-t="home" onclick="go('home',this)"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>Home</button>
+      <button class="tab" data-t="records" onclick="go('records',this)"><svg viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6zM9 8h6M9 12h6"/></svg>Records</button>
+      <div class="fab"><button onclick="go('capture')"><svg viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="3.5"/></svg></button></div>
+      <button class="tab" data-t="inbox" onclick="go('inbox',this)"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H7l-3 3z"/></svg>Inbox</button>
+      <button class="tab" data-t="hub" onclick="go('hub',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2 2.5 14 0 16M12 4c-2.5 2-2.5 14 0 16"/></svg>Hub</button>
+    </nav>
+
+    <!-- firm tab bar -->
+    <nav class="tabbar" id="tabsFirm">
+      <button class="tab on" data-t="firm-clients" onclick="go('firm-clients',this)"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M17 11a3 3 0 100-6"/></svg>Clients</button>
+      <button class="tab" data-t="firm-send" onclick="go('firm-send',this)"><svg viewBox="0 0 24 24"><path d="M3 11l18-8-8 18-2-7z"/></svg>Send</button>
+      <button class="tab" data-t="firm-content" onclick="go('firm-content',this)"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg>Content</button>
+      <button class="tab" data-t="firm-brand" onclick="go('firm-brand',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.3"/><circle cx="15" cy="9" r="1.3"/><circle cx="9.5" cy="14" r="1.3"/></svg>Brand</button>
+      <button class="tab" data-t="firm-insights" onclick="go('firm-insights',this)"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>Insights</button>
+    </nav>
+  </div>
+
+<script>
+  const FIRST = {onboard:'ob-welcome', client:'home', firm:'firm-clients'};
+  function setMode(m, el){
+    document.body.dataset.mode = m;
+    document.querySelectorAll('.vswitch button').forEach(b=>b.classList.remove('on'));
+    if(el) el.classList.add('on');
+    else { // sync chip when called programmatically
+      const idx = {onboard:0,client:1,firm:2}[m];
+      document.querySelectorAll('.vswitch button')[idx].classList.add('on');
+    }
+    go(FIRST[m]);
+  }
+  function go(id, el){
+    document.querySelectorAll('.screen').forEach(s=>{ const on=s.id===id; s.classList.toggle('active',on); if(on) s.scrollTop=0; });
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.t===id));
+  }
+  function sub2(id, btn){
+    if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+    else { document.querySelectorAll('#records .seg button').forEach((b,i)=>b.classList.toggle('on', b.getAttribute('onclick').includes("'"+id+"'"))); }
+    document.querySelectorAll('#records .subscreen').forEach(s=>s.classList.toggle('on', s.id===id));
+  }
+  let wfhHrs=6;
+  function wfh(d){ wfhHrs=Math.max(0,Math.min(12,wfhHrs+d));
+    document.getElementById('wfhN').textContent=wfhHrs;
+    document.getElementById('wfhH').textContent=wfhHrs;
+    document.getElementById('wfhD').textContent=(wfhHrs*0.70).toFixed(2); }
+  function applyBrand(b,ink,soft){const r=document.documentElement.style;r.setProperty('--brand',b);r.setProperty('--brand-ink',ink);r.setProperty('--brand-soft',soft);}
+  function pick(el,b,ink,soft){ applyBrand(b,ink,soft); el.parentElement.querySelectorAll('.csw').forEach(s=>s.setAttribute('aria-pressed', s===el)); syncTopSwatch(b); }
+  function syncTopSwatch(b){ document.querySelectorAll('.swatch').forEach(s=>s.setAttribute('aria-pressed', s.dataset.brand===b)); }
+  document.querySelectorAll('.swatch').forEach(sw=>sw.addEventListener('click',()=>{ applyBrand(sw.dataset.brand,sw.dataset.ink,sw.dataset.soft); syncTopSwatch(sw.dataset.brand);
+    document.querySelectorAll('.csw').forEach(s=>s.setAttribute('aria-pressed', s.style.background.replace(/\s/g,'')===hexToRgb(sw.dataset.brand))); }));
+  function hexToRgb(h){const n=parseInt(h.slice(1),16);return `rgb(${n>>16&255}, ${n>>8&255}, ${n&255})`;}
+</script>
+</body>
+</html>
