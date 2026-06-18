@@ -1,0 +1,38 @@
+name: Deploy prototype to Pages
+
+# Publishes the calm-fintech LedgerLink prototype (prototype/index.html) to GitHub Pages.
+# Pages is already enabled (Source: GitHub Actions), so configure-pages just reads the
+# existing site and proceeds to upload + deploy.
+on:
+  push:
+    branches: [ "claude/accountant-app-research-gw906t", "main" ]
+    paths: [ "prototype/**", ".github/workflows/pages.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      # Upload the prototype/ dir as the site root so the live URL serves the prototype directly.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: prototype
+      - id: deployment
+        uses: actions/deploy-pages@v4
