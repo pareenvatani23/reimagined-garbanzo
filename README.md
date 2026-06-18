@@ -16,12 +16,14 @@ centre of gravity.
 | [`prototype/index.html`](prototype/index.html) | Clickable calm-fintech prototype — client app + firm console, with live white-label theming. |
 | [`prototype/README.md`](prototype/README.md) | How to open the prototype and what to try. |
 | [`docs/MVP_BUILD_PLAN.md`](docs/MVP_BUILD_PLAN.md) | The concrete engineering plan to build the MVP — stack, data model, scope, milestones, compliance, verification. |
-| `.github/workflows/pages.yml` | Deploys the prototype to GitHub Pages. |
+| [`index.html`](index.html) | Root redirect to `prototype/` so GitHub Pages serves the prototype at the site root. |
 
 ## Live prototype
 
-Once GitHub Pages deploys (the workflow auto-enables it):
-**https://pareenvatani23.github.io/reimagined-garbanzo/**
+**https://pareenvatani23.github.io/reimagined-garbanzo/** (redirects to the prototype).
+
+To turn it on: **Settings → Pages → Build and deployment → Source: _Deploy from a branch_ →
+Branch: `claude/accountant-app-research-gw906t` / `(root)` → Save.** No Actions run required.
 
 ## Product in one line
 

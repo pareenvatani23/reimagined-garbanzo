@@ -2,12 +2,12 @@
 
 A single self-contained HTML file (`index.html`, no build step, no dependencies) that
 demonstrates the white-label **client app** and **firm console** in a calm-fintech visual
-language. Once Pages deploys it is live at
+language. Once Pages is enabled it is live at
 `https://pareenvatani23.github.io/reimagined-garbanzo/`.
 
 ## How to open
 
-- **Live:** the GitHub Pages URL above (deployed by `.github/workflows/pages.yml`).
+- **Live:** the GitHub Pages URL above (enable via Settings → Pages → Deploy from a branch → `(root)`).
 - **Locally:** open `prototype/index.html` in any browser — no server required.
 
 ## What to try (demo chrome at the top)
